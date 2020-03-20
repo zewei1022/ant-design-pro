@@ -2,9 +2,9 @@ import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { Menu, Icon } from 'antd';
 import Link from 'umi/link';
+import { isUrl } from '@/utils/utils';
 import { urlToList } from '../_utils/pathTools';
 import { getMenuMatches } from './SiderMenuUtils';
-import { isUrl } from '@/utils/utils';
 import styles from './index.less';
 
 const { SubMenu } = Menu;
@@ -118,6 +118,11 @@ export default class BaseMenu extends PureComponent {
     return `/${path || ''}`.replace(/\/+/g, '/');
   };
 
+  handleClick = (e)=>{ // 点击左侧菜单
+    const { onHandlePage } = this.props;
+    onHandlePage(e)
+  }
+
   render() {
     const {
       openKeys,
@@ -148,6 +153,7 @@ export default class BaseMenu extends PureComponent {
         key="Menu"
         mode={mode}
         theme={theme}
+        onClick={this.handleClick}
         onOpenChange={handleOpenChange}
         selectedKeys={selectedKeys}
         style={style}
