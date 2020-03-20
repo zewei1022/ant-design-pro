@@ -244,58 +244,59 @@ class BasicLayout extends React.PureComponent {
 
     // 切换 tab页 router.push(key);
     onChange = key => {
-        this.setState({ activeKey:key });
-        router.push(key)
+      this.setState({ activeKey:key });
+      router.push(key)
     };
 
     onEdit = (targetKey, action) => {
-        this[action](targetKey);
+      this[action](targetKey);
     }
 
     remove = (targetKey) => {
-        let {activeKey} = this.state;
-        let lastIndex;
-        this.state.tabList.forEach((pane, i) => {
-            if (pane.key === targetKey) {
-                lastIndex = i - 1;
-            }
-        });
-        const tabList = []; const tabListKey=[]
-        this.state.tabList.map(pane => {
-          if(pane.key !== targetKey){
-              tabList.push(pane)
-              tabListKey.push(pane.key)
-          }
-        });
-        if (lastIndex >= 0 && activeKey === targetKey) {
-            activeKey = tabList[lastIndex].key;
+      let {activeKey} = this.state;
+      let lastIndex;
+      this.state.tabList.forEach((pane, i) => {
+        if (pane.key === targetKey) {
+          lastIndex = i - 1;
         }
-        router.push(activeKey)
-        this.setState({ tabList, activeKey,tabListKey });
+      });
+      const tabList = []; 
+      const tabListKey = [];
+      this.state.tabList.map(pane => {
+        if(pane.key !== targetKey){
+          tabList.push(pane)
+          tabListKey.push(pane.key)
+        }
+      });
+      if (lastIndex >= 0 && activeKey === targetKey) {
+        activeKey = tabList[lastIndex].key;
+      }
+      router.push(activeKey)
+      this.setState({ tabList, activeKey,tabListKey });
     }
 
     updateTreeList = data => {
-        const treeData = data;
-        const treeList = [];
-        // 递归获取树列表
-        const getTreeList = data => {
-            data.forEach(node => {
-              if(!node.level){
-                treeList.push({ tab: node.name, key: node.path,locale:node.locale,closable:true,content:node.component });
-              }
-                if (node.children && node.children.length > 0) { //! node.hideChildrenInMenu &&
-                    getTreeList(node.children);
-                }
-            });
-        };
-        getTreeList(treeData);
-        return treeList;
+      const treeData = data;
+      const treeList = [];
+      // 递归获取树列表
+      const getTreeList = data => {
+        data.forEach(node => {
+          if(!node.level) {
+            treeList.push({ tab: node.name, key: node.path,locale:node.locale,closable:true,content:node.component });
+          }
+          if (node.children && node.children.length > 0) { //! node.hideChildrenInMenu &&
+            getTreeList(node.children);
+          }
+        });
+      };
+      getTreeList(treeData);
+      return treeList;
     };
 
     onClickHover=(e)=>{
-    // message.info(`Click on item ${key}`);
-    const { key } = e; let {activeKey,tabList,tabListKey,routeKey} = this.state;
-
+    const { key } = e; 
+    let {tabList,tabListKey} = this.state;
+    const {activeKey, routeKey} = this.state;
     if(key === '1'){
       tabList= tabList.filter((v)=>v.key !== activeKey || v.key === routeKey)
       tabListKey = tabListKey.filter((v)=>v !== activeKey || v === routeKey)
@@ -321,7 +322,6 @@ class BasicLayout extends React.PureComponent {
         tabListKey
       })
     }
-
   }
 
   render() {
@@ -330,18 +330,17 @@ class BasicLayout extends React.PureComponent {
       layout: PropsLayout,
       location: { pathname,search },
       isMobile,
-      children,
       menuData,
       breadcrumbNameMap,
       route: { routes },
-      fixedHeader,
-      hidenAntTabs,
+      fixedHeader
     } = this.props;
-    let {activeKey,routeKey} = this.state;
+    let {activeKey} = this.state;
+    const {routeKey} = this.state;
     if(pathname === '/'){
-          // router.push(routeKey)
-          activeKey = routeKey
-      }
+      // router.push(routeKey)
+      activeKey = routeKey
+    }
     const isTop = PropsLayout === 'topmenu';
     const routerConfig = this.getRouterAuthority(pathname+search, routes);
     const contentStyle = !fixedHeader ? { paddingTop: 0 } : {};
@@ -388,32 +387,27 @@ class BasicLayout extends React.PureComponent {
             {...this.props}
           />
           <Content className={styles.content} style={contentStyle}>
-            {hidenAntTabs ?
-              (<Authorized authority={routerConfig} noMatch={<Exception403 />}>
-                {children}
-              </Authorized>) :
-              (this.state.tabList && this.state.tabList.length ? (
-                <Tabs
+            {(this.state.tabList && this.state.tabList.length ? (
+              <Tabs
                 // className={styles.tabs}
-                  activeKey={activeKey}
-                  onChange={this.onChange}
-                  tabBarExtraContent={operations}
-                  tabBarStyle={{background:'#fff'}}
-                  tabPosition="top"
-                  tabBarGutter={-1}
-                  hideAdd
-                  type="editable-card"
-                  onEdit={this.onEdit}
-                >
-                  {this.state.tabList.map(item => (
-                    <TabPane tab={item.tab} key={item.key} closable={item.closable}>
-                      <Authorized noMatch={<Exception403 />}>
-                        {/* {item.content} */}
-                        <Route key={item.key} path={item.path} component={item.content} exact={item.exact} />
-                      </Authorized>
-                    </TabPane>
+                activeKey={activeKey}
+                onChange={this.onChange}
+                tabBarExtraContent={operations}
+                tabBarStyle={{background:'#fff'}}
+                tabPosition="top"
+                tabBarGutter={-1}
+                hideAdd
+                type="editable-card"
+                onEdit={this.onEdit}
+              >
+                {this.state.tabList.map(item => (
+                  <TabPane tab={item.tab} key={item.key} closable={item.closable}>
+                    <Authorized authority={routerConfig} noMatch={<Exception403 />}>
+                      <Route key={item.key} path={item.path} component={item.content} exact={item.exact} />
+                    </Authorized>
+                  </TabPane>
                 ))}
-                </Tabs>
+              </Tabs>
             ) : null)}
           </Content>
           <Footer />
