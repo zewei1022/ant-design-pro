@@ -12,7 +12,6 @@ import { formatMessage } from 'umi/locale';
 import Authorized from '@/utils/Authorized';
 import PageLoading from '@/components/PageLoading';
 import SiderMenu from '@/components/SiderMenu';
-import TabPages from '@/components/TabPages';
 import logo from '../assets/logo.svg';
 import Footer from './Footer';
 import Header from './Header';
@@ -196,7 +195,9 @@ class BasicLayout extends React.PureComponent {
             {...this.props}
           />
           <Content className={styles.content} style={contentStyle}>
-            <TabPages {...this.props} homePageKey='/dashboard/analysis' errorPage={<Exception403 />} />
+            <Authorized authority={routerConfig} noMatch={<Exception403 />}>
+              {children}
+            </Authorized>
           </Content>
           <Footer />
         </Layout>
