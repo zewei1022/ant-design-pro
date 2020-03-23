@@ -58,16 +58,18 @@ class BasicLayout extends React.PureComponent {
     const routeKey = '/dashboard/analysis';
     const tabName = '分析页';
     const tabLists = this.updateTree(routes);
-    const tabList=[]; const tabListArr=[];
+    const tabList = []; 
+    const tabListArr = [];
+
     tabLists.forEach((v) => {
-      if(v.key === routeKey){
-        if(tabList.length === 0){
+      if(v.key === routeKey) {
+        if(tabList.length === 0) {
           v.closable = false
           v.tab = tabName
           tabList.push(v);
         }
       }
-      if(v.key){
+      if(v.key) {
         tabListArr.push(v.key)
       }
     });
@@ -86,7 +88,7 @@ class BasicLayout extends React.PureComponent {
   }
 
   componentDidMount() {
-    // this.props.history.push({ pathname : '/'  })
+    router.push({ pathname : '/' })
     const {
       dispatch,
       route: { routes, authority },
@@ -104,7 +106,8 @@ class BasicLayout extends React.PureComponent {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.history.action === "POP" && this.props.location.pathname !== nextProps.location.pathname) {
+    const { prevPathname } = this.props;
+    if (nextProps.history.action === "POP" && prevPathname !== nextProps.location.pathname) {
       this.onHandlePage({ key: nextProps.location.pathname })
     }
   }
@@ -191,6 +194,7 @@ class BasicLayout extends React.PureComponent {
   updateTree = data => {
     const treeData = data;
     const treeList = [];
+
     // 递归获取树列表
     const getTreeList = subTreedata => {
       subTreedata.forEach(node => {
@@ -212,15 +216,15 @@ class BasicLayout extends React.PureComponent {
     const {search=''} = e;
     const tabLists = this.updateTreeList(menuData);
     const {tabListKey,tabList,tabListArr} = this.state;
-    if(tabListArr.includes(key)){
-      if(!search){
-        router.push(key)
+    if(tabListArr.includes(key)) {
+      if(!search) {
+        router.replace(key)
       }else{
-        router.push({pathname:key,search})
+        router.replace({pathname:key, search})
       }
     }else{
       key = '/exception/404'
-      router.push('/exception/404')
+      router.replace('/exception/404')
     }
 
     // 设置当前选择的key
@@ -229,25 +233,25 @@ class BasicLayout extends React.PureComponent {
     })
 
     tabLists.forEach((v) => {
-      if(v.key === key){
-        if(tabList.length === 0){
+      if(v.key === key) {
+        if(tabList.length === 0) {
           v.closable = false
           this.setState({
             tabList:[...tabList,v]
           })
-        }else if(!tabListKey.includes(v.key)){
-            this.setState({
-              tabList:[...tabList,v],
-              tabListKey:[...tabListKey,v.key]
-            })
-          }
+        }else if(!tabListKey.includes(v.key)) {
+          this.setState({
+            tabList:[...tabList,v],
+            tabListKey:[...tabListKey,v.key]
+          })
+        }
       }
     })
   }
 
   onChange = key => {
     this.setState({ activeKey:key });
-    router.push(key)
+    router.replace(key)
   }
 
   onEdit = (targetKey, action) => {
@@ -257,28 +261,29 @@ class BasicLayout extends React.PureComponent {
   remove = (targetKey) => {
     let {activeKey} = this.state;
     let lastIndex;
-    const { currentTabList } = this.state;
+    const {tabList} = this.state;
     
-    currentTabList.forEach((pane, i) => {
+    tabList.forEach((pane, i) => {
       if (pane.key === targetKey) {
         lastIndex = i - 1;
       }
     });
 
-    const tabList = []; 
-    const tabListKey = [];
-    currentTabList.forEach(pane => {
+    const newTabList = []; 
+    const newTabListKey = [];
+    tabList.forEach(pane => {
       if(pane.key !== targetKey){
-        tabList.push(pane)
-        tabListKey.push(pane.key)
+        newTabList.push(pane)
+        newTabListKey.push(pane.key)
       }
     });
 
     if (lastIndex >= 0 && activeKey === targetKey) {
-      activeKey = tabList[lastIndex].key;
+      activeKey = newTabList[lastIndex].key;
     }
-    router.push(activeKey)
-    this.setState({ tabList, activeKey,tabListKey });
+    router.replace(activeKey)
+
+    this.setState({ tabList: newTabList, activeKey, tabListKey: newTabListKey });
   }
 
   updateTreeList = data => {
@@ -346,7 +351,6 @@ class BasicLayout extends React.PureComponent {
     let {activeKey} = this.state;
     const {routeKey} = this.state;
     if(pathname === '/'){
-      // router.push(routeKey)
       activeKey = routeKey
     }
     const isTop = PropsLayout === 'topmenu';
@@ -395,27 +399,25 @@ class BasicLayout extends React.PureComponent {
             {...this.props}
           />
           <Content className={styles.content} style={contentStyle}>
-            {(this.state.tabList && this.state.tabList.length ? (
-              <Tabs
-                activeKey={activeKey}
-                onChange={this.onChange}
-                tabBarExtraContent={operations}
-                tabBarStyle={{background:'#fff'}}
-                tabPosition="top"
-                tabBarGutter={-1}
-                hideAdd
-                type="editable-card"
-                onEdit={this.onEdit}
-              >
-                {this.state.tabList.map(item => (
-                  <TabPane tab={item.tab} key={item.key} closable={item.closable}>
-                    <Authorized authority={routerConfig} noMatch={<Exception403 />}>
-                      <Route key={item.key} path={item.path} component={item.content} exact={item.exact} />
-                    </Authorized>
-                  </TabPane>
+            <Tabs
+              activeKey={activeKey}
+              onChange={this.onChange}
+              tabBarExtraContent={operations}
+              tabBarStyle={{background:'#fff'}}
+              tabPosition="top"
+              tabBarGutter={-1}
+              hideAdd
+              type="editable-card"
+              onEdit={this.onEdit}
+            >
+              {this.state.tabList.map(item => (
+                <TabPane tab={item.tab} key={item.key} closable={item.closable}>
+                  <Authorized authority={routerConfig} noMatch={<Exception403 />}>
+                    <Route key={item.key} path={item.path} component={item.content} exact={item.exact} />
+                  </Authorized>
+                </TabPane>
                 ))}
-              </Tabs>
-            ) : null)}
+            </Tabs>
           </Content>
           <Footer />
         </Layout>
