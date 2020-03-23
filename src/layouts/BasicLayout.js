@@ -54,10 +54,12 @@ const query = {
 class BasicLayout extends React.PureComponent {
   constructor(props) {
     super(props);
-    const {routes} = props.route; const routeKey = '/dashboard/analysis'; const tabName = '首页'; // routeKey 为设置首页设置 试试 '/dashboard/analysis' 或其他key值
+    const {routes} = props.route;
+    const routeKey = '/dashboard/analysis';
+    const tabName = '分析页';
     const tabLists = this.updateTree(routes);
     const tabList=[]; const tabListArr=[];
-    tabLists.map((v) => {
+    tabLists.forEach((v) => {
       if(v.key === routeKey){
         if(tabList.length === 0){
           v.closable = false
@@ -69,6 +71,7 @@ class BasicLayout extends React.PureComponent {
         tabListArr.push(v.key)
       }
     });
+
     // 获取所有已存在key值
     this.state = ({
         tabList,
@@ -83,7 +86,7 @@ class BasicLayout extends React.PureComponent {
   }
 
   componentDidMount() {
-    this.props.history.push({ pathname : '/'  })
+    // this.props.history.push({ pathname : '/'  })
     const {
       dispatch,
       route: { routes, authority },
@@ -102,7 +105,6 @@ class BasicLayout extends React.PureComponent {
 
   componentWillReceiveProps(nextProps) {
     if (nextProps.history.action === "POP" && this.props.location.pathname !== nextProps.location.pathname) {
-      console.log('pop')
       this.onHandlePage({ key: nextProps.location.pathname })
     }
   }
@@ -190,8 +192,8 @@ class BasicLayout extends React.PureComponent {
     const treeData = data;
     const treeList = [];
     // 递归获取树列表
-    const getTreeList = data => {
-      data.forEach(node => {
+    const getTreeList = subTreedata => {
+      subTreedata.forEach(node => {
         if(!node.level){
           treeList.push({ tab: node.name, key: node.path,locale:node.locale,closable:true,content:node.component });
         }
@@ -204,10 +206,12 @@ class BasicLayout extends React.PureComponent {
     return treeList;
   };
 
-  onHandlePage =(e)=>{// 点击左侧菜单
-    const {menuData} = this.props; let {key,search=''} = e;
+  onHandlePage = (e) => {
+    const {menuData} = this.props;
+    let {key} = e;
+    const {search=''} = e;
     const tabLists = this.updateTreeList(menuData);
-    const {tabListKey,tabList,tabListArr} =  this.state;
+    const {tabListKey,tabList,tabListArr} = this.state;
     if(tabListArr.includes(key)){
       if(!search){
         router.push(key)
@@ -219,10 +223,12 @@ class BasicLayout extends React.PureComponent {
       router.push('/exception/404')
     }
 
+    // 设置当前选择的key
     this.setState({
       activeKey:key
     })
-    tabLists.map((v) => {
+
+    tabLists.forEach((v) => {
       if(v.key === key){
         if(tabList.length === 0){
           v.closable = false
@@ -237,63 +243,65 @@ class BasicLayout extends React.PureComponent {
           }
       }
     })
-    // this.setState({
-    //   tabListKey:this.state.tabList.map((va)=>va.key)
-    // })
   }
 
-    // 切换 tab页 router.push(key);
-    onChange = key => {
-      this.setState({ activeKey:key });
-      router.push(key)
-    };
+  onChange = key => {
+    this.setState({ activeKey:key });
+    router.push(key)
+  }
 
-    onEdit = (targetKey, action) => {
-      this[action](targetKey);
-    }
+  onEdit = (targetKey, action) => {
+    this[action](targetKey);
+  }
 
-    remove = (targetKey) => {
-      let {activeKey} = this.state;
-      let lastIndex;
-      this.state.tabList.forEach((pane, i) => {
-        if (pane.key === targetKey) {
-          lastIndex = i - 1;
-        }
-      });
-      const tabList = []; 
-      const tabListKey = [];
-      this.state.tabList.map(pane => {
-        if(pane.key !== targetKey){
-          tabList.push(pane)
-          tabListKey.push(pane.key)
-        }
-      });
-      if (lastIndex >= 0 && activeKey === targetKey) {
-        activeKey = tabList[lastIndex].key;
+  remove = (targetKey) => {
+    let {activeKey} = this.state;
+    let lastIndex;
+    const { currentTabList } = this.state;
+    
+    currentTabList.forEach((pane, i) => {
+      if (pane.key === targetKey) {
+        lastIndex = i - 1;
       }
-      router.push(activeKey)
-      this.setState({ tabList, activeKey,tabListKey });
+    });
+
+    const tabList = []; 
+    const tabListKey = [];
+    currentTabList.forEach(pane => {
+      if(pane.key !== targetKey){
+        tabList.push(pane)
+        tabListKey.push(pane.key)
+      }
+    });
+
+    if (lastIndex >= 0 && activeKey === targetKey) {
+      activeKey = tabList[lastIndex].key;
     }
+    router.push(activeKey)
+    this.setState({ tabList, activeKey,tabListKey });
+  }
 
-    updateTreeList = data => {
-      const treeData = data;
-      const treeList = [];
-      // 递归获取树列表
-      const getTreeList = data => {
-        data.forEach(node => {
-          if(!node.level) {
-            treeList.push({ tab: node.name, key: node.path,locale:node.locale,closable:true,content:node.component });
-          }
-          if (node.children && node.children.length > 0) { //! node.hideChildrenInMenu &&
-            getTreeList(node.children);
-          }
-        });
-      };
-      getTreeList(treeData);
-      return treeList;
+  updateTreeList = data => {
+    const treeData = data;
+    const treeList = [];
+
+    // 递归获取树列表
+    const getTreeList = subTreedata => {
+      subTreedata.forEach(node => {
+        if(!node.level) {
+          treeList.push({ tab: node.name, key: node.path,locale:node.locale,closable:true,content:node.component });
+        }
+        if (node.children && node.children.length > 0) { //! node.hideChildrenInMenu &&
+          getTreeList(node.children);
+        }
+      });
     };
+    
+    getTreeList(treeData);
+    return treeList;
+  }
 
-    onClickHover=(e)=>{
+  onClickHover=(e)=>{
     const { key } = e; 
     let {tabList,tabListKey} = this.state;
     const {activeKey, routeKey} = this.state;
@@ -389,7 +397,6 @@ class BasicLayout extends React.PureComponent {
           <Content className={styles.content} style={contentStyle}>
             {(this.state.tabList && this.state.tabList.length ? (
               <Tabs
-                // className={styles.tabs}
                 activeKey={activeKey}
                 onChange={this.onChange}
                 tabBarExtraContent={operations}
