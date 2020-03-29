@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import router from 'umi/router';
 import { Route } from 'react-router-dom';
-import { Layout,Tabs,Dropdown,Menu,Icon  } from 'antd';
+import { Layout,Tabs,Dropdown,Menu,Icon } from 'antd';
 import DocumentTitle from 'react-document-title';
 import isEqual from 'lodash/isEqual';
 import memoizeOne from 'memoize-one';
