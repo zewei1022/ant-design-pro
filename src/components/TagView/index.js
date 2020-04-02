@@ -1,4 +1,4 @@
-import React, { PureComponent, Fragment } from 'react';
+import React, { PureComponent } from 'react';
 import router from 'umi/router';
 import { Route } from 'react-router-dom';
 import Authorized from '@/utils/Authorized';
@@ -82,11 +82,7 @@ class TagView extends PureComponent {
       })
     }
   }
-
-  handleTagContextMenuClick = e => {
-    console.log(e);
-  }
-
+  
   updateTree = data => {
     const treeData = data;
     const treeList = [];
@@ -148,7 +144,7 @@ class TagView extends PureComponent {
     }
 
     return (
-      <div className={styles.tagView} onContextMenu={this.handleTagContextMenuClick}>
+      <div className={styles.tagView}>
         <Tabs
           activeKey={activeKey}
           onChange={this.handleTagChange}
@@ -172,3 +168,5 @@ class TagView extends PureComponent {
     );
   }
 }
+
+export default TagView;
