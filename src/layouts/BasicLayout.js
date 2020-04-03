@@ -1,7 +1,7 @@
 import React, { Suspense } from 'react';
 import router from 'umi/router';
-import { Route } from 'react-router-dom';
-import { Layout,Tabs,Dropdown,Menu,Icon } from 'antd';
+import { Layout } from 'antd';
+import TagView from '@/components/TagView';
 import DocumentTitle from 'react-document-title';
 import isEqual from 'lodash/isEqual';
 import memoizeOne from 'memoize-one';
@@ -11,7 +11,6 @@ import classNames from 'classnames';
 import pathToRegexp from 'path-to-regexp';
 import Media from 'react-media';
 import { formatMessage } from 'umi/locale';
-import Authorized from '@/utils/Authorized';
 import PageLoading from '@/components/PageLoading';
 import SiderMenu from '@/components/SiderMenu';
 import logo from '../assets/logo.svg';
@@ -25,7 +24,7 @@ import styles from './BasicLayout.less';
 const SettingDrawer = React.lazy(() => import('@/components/SettingDrawer'));
 
 const { Content } = Layout;
-const { TabPane } = Tabs;
+
 const query = {
   'screen-xs': {
     maxWidth: 575,
@@ -54,25 +53,10 @@ const query = {
 class BasicLayout extends React.PureComponent {
   constructor(props) {
     super(props);
-    const {routes} = props.route;
+
     const routeKey = '/dashboard/analysis';
-    const tabName = '分析页';
-    const tabLists = this.updateTree(routes);
     const tabList = []; 
     const tabListArr = [];
-
-    tabLists.forEach((v) => {
-      if(v.key === routeKey) {
-        if(tabList.length === 0) {
-          v.closable = false
-          v.tab = tabName
-          tabList.push(v);
-        }
-      }
-      if(v.key) {
-        tabListArr.push(v.key)
-      }
-    });
 
     // 获取所有已存在key值
     this.state = ({
@@ -211,11 +195,11 @@ class BasicLayout extends React.PureComponent {
   };
 
   onHandlePage = (e) => {
-    const {menuData} = this.props;
-    let {key} = e;
-    const {search=''} = e;
+    const { menuData } = this.props;
+    let { key } = e;
+    const { search = '' } = e;
     const tabLists = this.updateTreeList(menuData);
-    const {tabListKey,tabList,tabListArr} = this.state;
+    const { tabListKey,tabList,tabListArr } = this.state;
     if(tabListArr.includes(key)) {
       if(!search) {
         router.replace(key)
@@ -249,43 +233,6 @@ class BasicLayout extends React.PureComponent {
     })
   }
 
-  onChange = key => {
-    this.setState({ activeKey:key });
-    router.replace(key)
-  }
-
-  onEdit = (targetKey, action) => {
-    this[action](targetKey);
-  }
-
-  remove = (targetKey) => {
-    let {activeKey} = this.state;
-    let lastIndex;
-    const {tabList} = this.state;
-    
-    tabList.forEach((pane, i) => {
-      if (pane.key === targetKey) {
-        lastIndex = i - 1;
-      }
-    });
-
-    const newTabList = []; 
-    const newTabListKey = [];
-    tabList.forEach(pane => {
-      if(pane.key !== targetKey){
-        newTabList.push(pane)
-        newTabListKey.push(pane.key)
-      }
-    });
-
-    if (lastIndex >= 0 && activeKey === targetKey) {
-      activeKey = newTabList[lastIndex].key;
-    }
-    router.replace(activeKey)
-
-    this.setState({ tabList: newTabList, activeKey, tabListKey: newTabListKey });
-  }
-
   updateTreeList = data => {
     const treeData = data;
     const treeList = [];
@@ -296,7 +243,7 @@ class BasicLayout extends React.PureComponent {
         if(!node.level) {
           treeList.push({ tab: node.name, key: node.path,locale:node.locale,closable:true,content:node.component });
         }
-        if (node.children && node.children.length > 0) { //! node.hideChildrenInMenu &&
+        if (node.children && node.children.length > 0) {
           getTreeList(node.children);
         }
       });
@@ -306,35 +253,8 @@ class BasicLayout extends React.PureComponent {
     return treeList;
   }
 
-  onClickHover=(e)=>{
-    const { key } = e; 
-    let {tabList,tabListKey} = this.state;
-    const {activeKey, routeKey} = this.state;
-    if(key === '1'){
-      tabList= tabList.filter((v)=>v.key !== activeKey || v.key === routeKey)
-      tabListKey = tabListKey.filter((v)=>v !== activeKey || v === routeKey)
-      this.setState({
-        activeKey:routeKey,
-        tabList,
-        tabListKey
-      })
-    }else if(key === '2'){
-      tabList= tabList.filter((v)=>v.key === activeKey || v.key === routeKey)
-      tabListKey = tabListKey.filter((v)=>v === activeKey || v === routeKey)
-      this.setState({
-        activeKey,
-        tabList,
-        tabListKey
-      })
-    }else if(key === '3'){
-      tabList= tabList.filter((v)=>v.key === routeKey)
-      tabListKey = tabListKey.filter((v)=>v === routeKey)
-      this.setState({
-        activeKey:routeKey,
-        tabList,
-        tabListKey
-      })
-    }
+  handleSetTagValue = (data) => {
+    this.setState(data)
   }
 
   render() {
@@ -348,30 +268,14 @@ class BasicLayout extends React.PureComponent {
       route: { routes },
       fixedHeader
     } = this.props;
-    let {activeKey} = this.state;
-    const {routeKey} = this.state;
+    let { activeKey } = this.state;
+    const { routeKey, tabList,tabListArr,tabListKey } = this.state;
     if(pathname === '/'){
       activeKey = routeKey
     }
     const isTop = PropsLayout === 'topmenu';
     const routerConfig = this.getRouterAuthority(pathname+search, routes);
     const contentStyle = !fixedHeader ? { paddingTop: 0 } : {};
-    this.props.location.onHandlePage = this.onHandlePage;
-    const menu = (
-      <Menu onClick={this.onClickHover}>
-        <Menu.Item key="1">关闭当前标签页</Menu.Item>
-        <Menu.Item key="2">关闭其他标签页</Menu.Item>
-        <Menu.Item key="3">关闭全部标签页</Menu.Item>
-      </Menu>
-    );
-    const operations = (
-      <Dropdown overlay={menu}>
-        <a className="ant-dropdown-link" href="#">
-          Hover me<Icon type="down" />
-        </a>
-      </Dropdown>
-    );
-
     const layout = (
       <Layout>
         {isTop && !isMobile ? null : (
@@ -399,25 +303,7 @@ class BasicLayout extends React.PureComponent {
             {...this.props}
           />
           <Content className={styles.content} style={contentStyle}>
-            <Tabs
-              activeKey={activeKey}
-              onChange={this.onChange}
-              tabBarExtraContent={operations}
-              tabBarStyle={{background:'#fff'}}
-              tabPosition="top"
-              tabBarGutter={-1}
-              hideAdd
-              type="editable-card"
-              onEdit={this.onEdit}
-            >
-              {this.state.tabList.map(item => (
-                <TabPane tab={item.tab} key={item.key} closable={item.closable}>
-                  <Authorized authority={routerConfig} noMatch={<Exception403 />}>
-                    <Route key={item.key} path={item.path} component={item.content} exact={item.exact} />
-                  </Authorized>
-                </TabPane>
-                ))}
-            </Tabs>
+            <TagView routes={routes} activeKey={activeKey} routeKey={routeKey} tabList={tabList} tabListArr={tabListArr} tabListKey={tabListKey} handleSetTagValue={this.handleSetTagValue} authority={routerConfig} noMatch={<Exception403 />} />
           </Content>
           <Footer />
         </Layout>

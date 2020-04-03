@@ -8,12 +8,10 @@ import styles from './index.less';
 class TagView extends PureComponent {
   constructor(props) {
     super(props);
-    const { routes } = props.route;
+    const { routes, tabList, tabListArr } = props;
     const routeKey = '/dashboard/analysis';
     const tabName = '分析页';
     const tabLists = this.updateTree(routes);
-    const tabList = [];
-    const tabListArr = [];
 
     tabLists.forEach((v) => {
       if (v.key === routeKey) {
@@ -27,59 +25,84 @@ class TagView extends PureComponent {
         tabListArr.push(v.key)
       }
     });
-
-    // 获取所有已存在key值
-    this.state = ({
-      tabList,
-      tabListKey: [routeKey],
-      activeKey: routeKey,
-      tabListArr,
-      routeKey
-    })
   }
 
   handleTagChange = key => {
-    this.setState({ activeKey: key });
+    const { handleSetTagValue } = this.props;
+    handleSetTagValue({ activeKey: key })
     router.replace(key)
   }
 
   handleTagClick = key => {
-    this.setState({ activeKey: key });
+    const { handleSetTagValue } = this.props;
+    handleSetTagValue({ activeKey: key })
     router.replace(key)
   }
 
   handleTagEdit = (targetKey, action) => {
-    this[action](targetKey);
+    if (action === 'remove') {
+      this.handleTagRemove(targetKey);
+    }
+  }
+
+  handleTagRemove = (targetKey) => {
+    let { activeKey } = this.props;
+    const { tabList, handleSetTagValue } = this.props;
+    let lastIndex;
+    
+    tabList.forEach((pane, i) => {
+      if (pane.key === targetKey) {
+        lastIndex = i - 1;
+      }
+    });
+
+    const newTabList = []; 
+    const newTabListKey = [];
+    tabList.forEach(pane => {
+      if(pane.key !== targetKey){
+        newTabList.push(pane)
+        newTabListKey.push(pane.key)
+      }
+    });
+
+    if (lastIndex >= 0 && activeKey === targetKey) {
+      activeKey = newTabList[lastIndex].key;
+    }
+
+    router.replace(activeKey)
+
+    handleSetTagValue({ tabList: newTabList, activeKey, tabListKey: newTabListKey });
   }
 
   handelMenuClick = e => {
     const { key } = e;
-    let { tabList, tabListKey } = this.state;
-    const { activeKey, routeKey } = this.state;
+    let { tabList, tabListKey } = this.props;
+    const { activeKey, routeKey, handleSetTagValue } = this.props;
+
     if (key === '1') {
       tabList = tabList.filter((v) => v.key !== activeKey || v.key === routeKey)
       tabListKey = tabListKey.filter((v) => v !== activeKey || v === routeKey)
-      this.setState({
+      handleSetTagValue({
         activeKey: routeKey,
         tabList,
         tabListKey
-      })
+      });
     } else if (key === '2') {
       tabList = tabList.filter((v) => v.key === activeKey || v.key === routeKey)
       tabListKey = tabListKey.filter((v) => v === activeKey || v === routeKey)
-      this.setState({
-        activeKey,
-        tabList,
-        tabListKey
-      })
-    } else if (key === '3') {
-      tabList = tabList.filter((v) => v.key === routeKey)
-      tabListKey = tabListKey.filter((v) => v === routeKey)
-      this.setState({
+      handleSetTagValue({
         activeKey: routeKey,
         tabList,
         tabListKey
-      })
+      });
+    } else if (key === '3') {
+      tabList = tabList.filter((v) => v.key === routeKey)
+      tabListKey = tabListKey.filter((v) => v === routeKey)
+      handleSetTagValue({
+        activeKey: routeKey,
+        tabList,
+        tabListKey
+      });
     }
   }
   
@@ -103,7 +126,7 @@ class TagView extends PureComponent {
 
   render() {
     const { TabPane } = Tabs;
-    const { authority, noMatch } = this.props;
+    const { authority, noMatch, activeKey, tabList} = this.props;
 
     const menu = (
       <Menu onClick={this.handelMenuClick}>
@@ -119,29 +142,6 @@ class TagView extends PureComponent {
         </a>
       </Dropdown>
     );
-    const renderTabBar = (DefaultTabBarProps, DefaultTabBar) => {
-      const tabInfo = [];
-      DefaultTabBarProps.panels.forEach(item => {
-        tabInfo.push({
-          key: item.key,
-          title: item.props.tab
-        })
-      });
-
-      return (
-        <Dropdown overlay={menu} trigger={['contextMenu']}>
-          <div style={{ display: 'flex', marginBottom: 16 }}>
-            {
-              tabInfo.map((item, index) => {
-                <div key={item.key} onClick={this.handleTagClick} className={props.activeKey === item.key ? 'activeTab' : 'normalTab'}>
-                  <div style={{ padding: '0 16px' }}>{item.title}</div>
-                </div>
-              })
-            }
-          </div>
-        </Dropdown>
-      );
-    }
 
     return (
       <div className={styles.tagView}>
@@ -156,7 +156,7 @@ class TagView extends PureComponent {
           type="editable-card"
           onEdit={this.handleTagEdit}
         >
-          {this.state.tabList.map(item => (
+          {tabList.map(item => (
             <TabPane tab={item.tab} key={item.key} closable={item.closable}>
               <Authorized authority={authority} noMatch={noMatch}>
                 <Route key={item.key} path={item.path} component={item.content} exact={item.exact} />
